@@ -1,19 +1,37 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Column, Entity } from 'typeorm';
+import { BaseEntity } from '../../shared/entities/base.entity';
+import { UserRole } from '../enums/user-roles.enum';
 
-@Entity()
-export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  name: string;
-
-  @Column({ unique: true })
-  email: string;
-
-  @Column({ unique: true })
+@Entity({ name: 'users' })
+export class User extends BaseEntity {
+  @Column({ name: 'phone_number', unique: true })
   phoneNumber: string;
 
-  @Column()
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true
+  })
+  fullname: string;
+
+  @Column({
+    type: 'varchar',
+    length: 30,
+    nullable: true
+  })
+  email: string;
+
+  @Column({
+    type: 'text',
+    nullable: true
+  })
   password: string;
+
+  @Column({
+    type: 'set',
+    name: 'user_roles',
+    enum: UserRole,
+    default: [UserRole.NORMAL]
+  })
+  userRoles: UserRole[];
 }

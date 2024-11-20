@@ -1,35 +1,20 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ApiKeyMiddleware } from './auth/middlewares/apikey.middleware';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
-import { User } from './users/entities/user.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true
-    }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      url: process.env.DATABASE_URL,
-      autoLoadEntities: false,
-      synchronize: false,
-      logging: false,
-      ssl: {
-        rejectUnauthorized: false
-      },
-      entities: [User]
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
+    DatabaseModule,
     AuthModule,
     UsersModule
   ],
-  controllers: [AppController],
-  providers: [AppService]
+  controllers: [],
+  providers: []
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
