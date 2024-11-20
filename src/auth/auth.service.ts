@@ -13,6 +13,7 @@ import * as process from 'node:process';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from '../users/enums/user-roles.enum';
 import { AuthTokens } from './types/auth-tokens.type';
+import { VerifyOTPDto } from './dto/verify-otp.dto';
 
 @Injectable()
 export class AuthService {
@@ -32,14 +33,10 @@ export class AuthService {
     );
 
     if (userExists) {
-      if (userExists.deletedAt) {
-        return this.reActivateUser(userExists, createUserDto);
-      } else {
         throw new ConflictException(
           'User with this phone Number already exists'
         );
       }
-    }
 
     const hash = await this.hashData(createUserDto.otp);
 
@@ -47,35 +44,31 @@ export class AuthService {
       createUserDto.phoneNumber
     );
 
-    return this.setUserToken(newUser);
+    const tokens = await this.getTokens(newUser.id, newUser.phoneNumber);
+    await this.updateRefreshToken(newUser.id, tokens.refreshToken);
+    return tokens;
   }
 
-  async setUserToken(user: User) {
-    const tokens: AuthTokens = await this.getTokens(
-      user.id,
-      user.phoneNumber,
-      user.userRoles
-    );
-
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
-    return {
-      tokens,
-      user
-    };
+  async updateRefreshToken(userId: number, refreshToken: string) {
+    const hashedRefreshToken = await this.hashData(refreshToken);
+    await this.usersService.update(userId, {
+      refreshToken: hashedRefreshToken,
+    });
   }
 
-  async generateAccessToken(user: User): Promise<string> {
-    const payload = { email: user.email, sub: user.id };
+  async generateAccessToken(userId:number,phoneNumber:string): Promise<string> {
+    const payload = { sub: userId, phoneNumber: phoneNumber };
     return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
       expiresIn: process.env.ACCESS_TOKEN_EXPIRE_AFTER
     });
   }
 
-  async generateRefreshToken(user: User): Promise<string> {
-    const payload = { email: user.email, sub: user.id };
+  async generateRefreshToken(userId:number,phoneNumber:string): Promise<string> {
+    const payload = { sub: userId, phoneNumber: phoneNumber };
     return this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET')
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRE_AFTER
     });
   }
 
@@ -88,29 +81,45 @@ export class AuthService {
   }
 
   // TODO implement sign in logic
-  async signIn(phoneNumber: string, otp: number): Promise<any> {
-    const user = await this.usersService.findOneByPhoneNumber(phoneNumber);
-    // if (user?.otpCode !== otp) {
-    //   throw new UnauthorizedException('Entered otp is incorrect');
-    // }
-
-    const payload: JwtPayload = { sub: user.id, email: user.email };
-
-    return {
-      access_token: await this.jwtService.signAsync(payload)
-    };
+	async signIn(data: VerifyOTPDto) {
+    // Check if user exists
+    const user = await this.usersService.findOneByPhoneNumber(data.phoneNumber);
+    if (!user) throw new BadRequestException('User does not exist');
+    const passwordMatches = await argon2.verify(user.password, data.otpCode);
+    if (!passwordMatches)
+      throw new BadRequestException('Password is incorrect');
+    const tokens = await this.getTokens(user.id, user.phoneNumber);
+    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    return tokens;
   }
 
   // TODO implement reactivate user method
   private reActivateUser(user: User, createUserDto: CreateUserDto) {}
 
-  // TODO implement update refresh token
-  private async updateRefreshToken(id: number, refreshToken: string) {}
 
-  // TODO implement generate tokens
-  private async getTokens(
-    id: number,
-    phoneNumber: string,
-    userRoles: UserRole[]
-  ): Promise<any> {}
+  async getTokens(userId: number, phoneNumber: string) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.generateAccessToken(userId,phoneNumber),
+      this.generateRefreshToken(userId,phoneNumber)
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async refreshTokens(userId: number, refreshToken: string) {
+    const user = await this.usersService.findOneById(userId);
+    if (!user || !user.refreshToken)
+      throw new ForbiddenException('Access Denied');
+    const refreshTokenMatches = await argon2.verify(
+      user.refreshToken,
+      refreshToken,
+    );
+    if (!refreshTokenMatches) throw new ForbiddenException('Access Denied');
+    const tokens = await this.getTokens(user.id, user.username);
+    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    return tokens;
+  }
 }
