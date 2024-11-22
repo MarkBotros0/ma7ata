@@ -28,6 +28,13 @@ export class User extends BaseEntity {
   password: string;
 
   @Column({
+    type: 'varchar',
+    length: 768,
+    nullable: true
+  })
+  refreshToken: string;
+
+  @Column({
     type: 'set',
     name: 'user_roles',
     enum: UserRole,

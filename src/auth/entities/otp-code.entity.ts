@@ -11,6 +11,9 @@ export class OtpCode {
   @PrimaryColumn({ name: 'phone_number', type: 'varchar' })
   phoneNumber: string;
 
+  @Column({ name: 'otp', type: 'text' })
+  otp: string;
+
   @CreateDateColumn({
     type: 'timestamp',
     name: 'created_at',

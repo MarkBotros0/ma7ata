@@ -5,8 +5,4 @@ export class CreateUserDto {
   @IsString()
   @ApiProperty()
   phoneNumber: string;
-
-  @IsString()
-  @ApiProperty()
-  otp: string;
 }
