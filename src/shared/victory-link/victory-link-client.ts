@@ -44,19 +44,10 @@ export class VictoryLinkClient {
       )
     );
 
-    console.log({
-      UserName: this.username,
-      Password: this.password,
-      SMSText: otp,
-      SMSLang: SMS_LANGUAGES.ENGLISH,
-      SMSSender: this.sender,
-      SMSReceiver: phoneNumber,
-      SMSID: uuidv4()
-    });
     const responseCode = response.data;
 
-    if (Number(responseCode) !== 0) {
-      handleVictoryLinkErrors(Number(responseCode));
-    }
+    // if (Number(responseCode) !== 0) {
+    //   handleVictoryLinkErrors(Number(responseCode));
+    // }
   }
 }

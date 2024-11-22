@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException
+} from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -28,6 +32,14 @@ export class UsersService {
     phoneNumber: string,
     data?: Partial<Omit<User, 'phoneNumber'>>
   ): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { phoneNumber } });
+
+    if (user) {
+      throw new BadRequestException(
+        `User with phone number ${phoneNumber} is already registered`
+      );
+    }
+
     return this.usersRepository.save({ phoneNumber, ...data });
   }
 

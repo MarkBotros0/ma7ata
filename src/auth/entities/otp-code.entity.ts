@@ -8,7 +8,7 @@ import {
 
 @Entity({ name: 'otp_code' })
 export class OtpCode {
-  @PrimaryColumn({ name: 'phone_number', type: 'varchar' })
+  @PrimaryColumn({ name: 'phone_number', type: 'varchar', length: 15 })
   phoneNumber: string;
 
   @Column({ name: 'otp', type: 'text' })

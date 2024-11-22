@@ -48,17 +48,11 @@ export class OtpService {
     return otp;
   }
 
-  async validateOtp(authDto: AuthDto): Promise<boolean> {
+  async verifyOtp(authDto: AuthDto): Promise<boolean> {
     const { phoneNumber, otp } = authDto;
 
-    const [userExists, otpExists] = await Promise.all([
-      this.usersService.findOneByPhoneNumber(phoneNumber),
-      this.otpCodeRepository.findOne({ where: { phoneNumber } })
-    ]);
+    const otpExists = await this.findOtpByPhoneNumber(phoneNumber);
 
-    if (userExists) {
-      throw new ConflictException('User with this phone Number already exists');
-    }
     if (!otpExists) {
       throw new ConflictException('Otp of this phone number is expired');
     }
@@ -68,6 +62,13 @@ export class OtpService {
 
   async sendOtp(phoneNumber: string) {
     const otp: string = await this.generateOtp(phoneNumber);
+    console.log(otp);
     await this.victoryLinkClient.sendOTP(phoneNumber, otp);
+  }
+
+  async findOtpByPhoneNumber(phoneNumber: string) {
+    return this.otpCodeRepository.findOne({
+      where: { phoneNumber }
+    });
   }
 }

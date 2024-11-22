@@ -4,7 +4,7 @@ import { UserRole } from '../enums/user-roles.enum';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
-  @Column({ name: 'phone_number', unique: true })
+  @Column({ name: 'phone_number', unique: true, type: 'varchar', length: 15 })
   phoneNumber: string;
 
   @Column({

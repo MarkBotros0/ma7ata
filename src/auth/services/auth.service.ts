@@ -31,8 +31,8 @@ export class AuthService {
     return argon2.hash(data);
   }
 
-  async signUp(authDto: AuthDto): Promise<AuthTokens> {
-    const otpMatches: boolean = await this.otpService.validateOtp(authDto);
+  async signUp(authDto: AuthDto): Promise<{ tokens: AuthTokens }> {
+    const otpMatches: boolean = await this.otpService.verifyOtp(authDto);
     if (!otpMatches) {
       throw new BadRequestException('OTP provided is not correct');
     }
@@ -45,7 +45,7 @@ export class AuthService {
     );
     await this.updateRefreshToken(newUser.id, tokens.refreshToken);
 
-    return tokens;
+    return { tokens };
   }
 
   async generateAccessToken(
@@ -88,8 +88,8 @@ export class AuthService {
     });
   }
 
-  async signIn(authDto: AuthDto) {
-    const isOtpVerified = await this.otpService.validateOtp(authDto);
+  async signIn(authDto: AuthDto): Promise<{ tokens: AuthTokens }> {
+    const isOtpVerified = await this.otpService.verifyOtp(authDto);
     if (!isOtpVerified) throw new BadRequestException('Otp is incorrect');
 
     const user: User = await this.usersService.findOneByPhoneNumber(
@@ -98,7 +98,7 @@ export class AuthService {
 
     const tokens: AuthTokens = await this.getTokens(user.id, user.phoneNumber);
     await this.updateRefreshToken(user.id, tokens.refreshToken);
-    return tokens;
+    return { tokens };
   }
 
   // TODO implement reactivate user method

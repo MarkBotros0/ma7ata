@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { ApiKeyMiddleware } from './auth/middlewares/apikey.middleware';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
@@ -19,6 +19,9 @@ import { DatabaseModule } from './database/database.module';
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
-    consumer.apply(ApiKeyMiddleware).forRoutes('*');
+    consumer
+      .apply(ApiKeyMiddleware)
+      .exclude({ path: '/api/auth/send-otp', method: RequestMethod.POST })
+      .forRoutes('*');
   }
 }
