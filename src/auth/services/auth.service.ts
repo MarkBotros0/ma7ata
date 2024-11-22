@@ -101,9 +101,6 @@ export class AuthService {
     return { tokens };
   }
 
-  // TODO implement reactivate user method
-  private reActivateUser(user: User, createUserDto: CreateUserDto) {}
-
   async refreshTokens(userId: number, refreshToken: string) {
     const user = await this.usersService.findOneById(userId);
     if (!user || !user.refreshToken)

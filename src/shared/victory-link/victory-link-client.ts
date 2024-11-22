@@ -46,8 +46,8 @@ export class VictoryLinkClient {
 
     const responseCode = response.data;
 
-    // if (Number(responseCode) !== 0) {
-    //   handleVictoryLinkErrors(Number(responseCode));
-    // }
+    if (Number(responseCode) !== 0) {
+      handleVictoryLinkErrors(Number(responseCode));
+    }
   }
 }

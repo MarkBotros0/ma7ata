@@ -5,7 +5,6 @@ import { SendOTPDto } from './dto/send-otp.dto';
 import { OtpService } from './services/otp.service';
 import { AuthDto } from './dto/auth.dto';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { AccessTokenGuard } from './guards/access-token.guard';
 
 @Controller('auth')
 @ApiTags('Auth')
