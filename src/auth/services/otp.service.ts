@@ -2,11 +2,13 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import * as otpGenerator from 'otp-generator';
 import { OtpCode } from '../entities/otp-code.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { AuthDto } from '../dto/auth.dto';
 import * as argon2 from 'argon2';
 import { UsersService } from '../../users/users.service';
 import { VictoryLinkClient } from '../../shared/victory-link/victory-link-client';
+import { Cron } from '@nestjs/schedule';
+import * as process from 'node:process';
 
 @Injectable()
 export class OtpService {
@@ -69,6 +71,18 @@ export class OtpService {
   async findOtpByPhoneNumber(phoneNumber: string) {
     return this.otpCodeRepository.findOne({
       where: { phoneNumber }
+    });
+  }
+
+  @Cron('*/1 * * * *')
+  async clearExpiredOtps() {
+    const expirationTimeInMinutes = Number(process.env.OTP_EXPIRATION_MINUTES);
+    const now = new Date();
+    const expirationTime = new Date(
+      now.getTime() - expirationTimeInMinutes * 60 * 1000
+    );
+    await this.otpCodeRepository.delete({
+      expiresAt: LessThan(expirationTime)
     });
   }
 }
