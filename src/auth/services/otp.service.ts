@@ -75,7 +75,7 @@ export class OtpService {
   }
 
   @Cron('*/1 * * * *')
-  async clearExpiredOtps() {
+  async clearExpiredOtps(): Promise<void> {
     const expirationTimeInMinutes = Number(process.env.OTP_EXPIRATION_MINUTES);
     const now = new Date();
     const expirationTime = new Date(
